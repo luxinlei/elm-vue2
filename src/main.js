@@ -7,6 +7,7 @@ import VueResource from 'vue-resource';
 import goods from './components/goods/goods';
 import ratings from './components/ratings/ratings';
 import seller from './components/seller/seller';
+import './common/stylus/index.styl';
 
 Vue.config.productionTip = false;
 
@@ -20,15 +21,15 @@ const routes = [
   },
   {
     path: '/goods',
-    components: goods
+    component: goods
   },
   {
     path: '/ratings',
-    components: ratings
+    component: ratings
   },
   {
     path: '/seller',
-    components: seller
+    component: seller
   }
 ];
 
