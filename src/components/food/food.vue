@@ -19,9 +19,10 @@
             <span class="old" v-show="food.oldPrice">￥{{food.oldPrice}}</span>
           </div>
           <div class="cartcontrol-wrapper">
-
+            <cartcontrol @add="addFood" :food="food"></cartcontrol>
           </div>
-          <div class="buy">加入购物车</div>
+          <transition name="fade"></transition>
+          <div @click.stop.prevent="addFirst" class="buy" v-show="!food.count || food.count === 0">加入购物车</div>
         </div>
         <div class="split"></div>
         <div class="info">
@@ -31,17 +32,38 @@
         <div class="split"></div>
         <div class="rating">
           <h1 class="title">商品评价</h1>
-          <ratingselect  :selectType="selectType" :desc="desc"
+          <ratingselect @select="selectRating" @toggle="toggleContent" :onlyContent="onlyContent"
+                        :selectType="selectType" :desc="desc"
                         :ratings="food.ratings"></ratingselect>
+          <div class="rating-wrapper">
+            <ul v-show="food.ratings && food.ratings.length">
+              <li v-show="needShow(rating.rateType,rating.text)" v-for="rating in food.ratings"
+                  class="rating-item border-1px">
+                <div class="user">
+                  <span class="name">{{rating.name}}</span>
+                  <img class="avatar" width="12" height="12" :src="rating.avatar">
+                </div>
+                <div class="time">{{rating.rateTime | formatDate}}</div>
+                <p class="text">
+                  <span :class="{'icon-thumb_up':rating.rateType===0,'icon-thumb_down':rating.rateType===1}">{{rating.text}}</span>
+                </p>
+              </li>
+            </ul>
+          </div>
         </div>
+
       </div>
     </div>
   </transition>
 </template>
 <script type="text/ecmascript-6">
+  import Vue from 'vue';
+  import {formatDate} from '../../common/js/date.js';
   import BScroll from 'better-scroll';
   import ratingselect from '../ratingselect/ratingselect.vue';
+  import cartcontrol from '../cartcontrol/cartcontrol';
 
+  const ALL = 2;
   export default {
     props: {
       food: {
@@ -50,12 +72,34 @@
     },
     data() {
       return {
-        showFlag: false
+        showFlag: false,
+        selectType: ALL,
+        onlyContent: true,
+        desc: {
+          all: '全部',
+          positive: '推荐',
+          negative: '吐槽'
+        }
       };
     },
+    filters: {
+      formatDate(time) {
+        let date = new Date(time);
+        return formatDate(date, 'yyyy-MM-dd hh:mm');
+      }
+    },
     methods: {
+      addFirst(event) {
+        if (!event._constructed) {
+          return;
+        }
+        this.$emit('add', event.target);
+        Vue.set(this.food, 'count', 1);
+      },
       show() {
         this.showFlag = true;
+        this.selectType = ALL;
+        this.onlyContent = true;
         this.$nextTick(() => {
           if (!this.scroll) {
             this.scroll = new BScroll(this.$refs.food, {
@@ -66,12 +110,35 @@
           }
         });
       },
+      selectRating(type) {
+        this.selectType = type;
+        this.$nextTick(() => {
+          this.scroll.refresh();
+        });
+      },
+      toggleContent() {
+        this.onlyContent = !this.onlyContent;
+        this.$nextTick(() => {
+          this.scroll.refresh();
+        });
+      },
+      needShow(type, text) {
+        if (this.onlyContent && !text) {
+          return false;
+        }
+        if (this.selectType === ALL) {
+          return true;
+        } else {
+          return type === this.selectType;
+        }
+      },
       hide() {
         this.showFlag = false;
       }
     },
     components: {
-      ratingselect
+      ratingselect,
+      cartcontrol
     }
   };
 </script>
@@ -103,7 +170,7 @@
         width 100%
         height 100%
       .back
-        position absolute
+        position fixed
         top 10px
         left 0px
         .icon-arrow_lift
@@ -156,11 +223,20 @@
         color #fff
         background #00a0dc
         opacity 1
+        &.fade-enter-active, &.fade-leave-active
+          transition: all 0.2s
+        &.fade-enter, &.fade-leave-active
+          opacity: 0
+          z-index: -1
+      .cartcontrol-wrapper
+        position absolute
+        right 12px
+        bottom 12px
     .split
       width 100%
       height 16px
-      border-top 1px solid rgba(7,17,27,0.1)
-      border-bottom 1px solid rgba(7,17,27,0.1)
+      border-top 1px solid rgba(7, 17, 27, 0.1)
+      border-bottom 1px solid rgba(7, 17, 27, 0.1)
       background #f3f5f7
     .info
       padding 18px
@@ -177,10 +253,52 @@
     .rating
       padding-top: 18px
       .title
-        line-height 14px
-        margin-left 18px
-        font-size 14px
-        color #07111b
+        line-height: 14px
+        margin-left: 18px
+        font-size: 14px
+        color: rgb(7, 17, 27)
+      .rating-wrapper
+        padding: 0 18px
+        .rating-item
+          position: relative
+          padding: 16px 0
+          border-1px(rgba(7, 17, 27, 0.1))
+          .user
+            position: absolute
+            right: 0
+            top: 16px
+            line-height: 12px
+            font-size: 0
+            .name
+              display: inline-block
+              margin-right: 6px
+              vertical-align: top
+              font-size: 10px
+              color: rgb(147, 153, 159)
+            .avatar
+              border-radius: 50%
+          .time
+            margin-bottom: 6px
+            line-height: 12px
+            font-size: 10px
+            color: rgb(147, 153, 159)
+          .text
+            line-height: 16px
+            font-size: 12px
+            color: rgb(7, 17, 27)
+            .icon-thumb_up, .icon-thumb_down
+              margin-right: 4px
+              line-height: 16px
+              font-size: 12px
+            .icon-thumb_up
+              color: rgb(0, 160, 220)
+            .icon-thumb_down
+              color: rgb(147, 153, 159)
+
+        .no-rating
+          padding: 16px 0
+          font-size: 12px
+          color: rgb(147, 153, 159)
 
 
 </style>
