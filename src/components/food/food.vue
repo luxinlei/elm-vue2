@@ -1,5 +1,5 @@
 <template>
-  <transition name="move">
+  <transition name="move1">
     <div class="food" v-show="showFlag" ref="food">
       <div class="food-content">
         <div class="image-header">
