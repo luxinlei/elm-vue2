@@ -58,7 +58,7 @@
         transition: all 0.4s linear
         transform: rotate(0)
       &.move-enter-active, &.move-leave-active
-        transition: all 0.4s linear
+        transition: all 0.6s linear
       &.move-enter, &.move-leave-active
         opacity: 0
         transform: translate3d(24px, 0, 0)
